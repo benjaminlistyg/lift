@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Adaptive PL">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Adaptive Powerlifting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-2: #1e1e1e;
+      --accent: #ff3c3c;
+      --accent-dim: #cc2e2e;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --success: #22c55e;
+      --warning: #eab308;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0 2rem;
+      border-bottom: 1px solid var(--surface-2);
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    .week-indicator {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      background: var(--surface);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab {
+      flex: 1;
+      padding: 1rem;
+      background: var(--surface);
+      border: none;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab:hover { background: var(--surface-2); }
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background: var(--surface-2);
+    }
+    .day-content { display: none; }
+    .day-content.active { display: block; }
+    .lift-card {
+      background: var(--surface);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent);
+    }
+    .lift-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .lift-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.05em;
+    }
+    .training-max {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .training-max input {
+      width: 70px;
+      background: var(--surface-2);
+      border: 1px solid var(--surface-2);
+      color: var(--text);
+      padding: 0.3rem 0.5rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      margin-left: 0.5rem;
+    }
+    .sets-container { display: flex; flex-direction: column; gap: 0.75rem; }
+    .set-row {
+      display: grid;
+      grid-template-columns: 50px 1fr 80px 90px;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--surface-2);
+      font-size: 0.85rem;
+    }
+    .set-label { color: var(--text-dim); }
+    .set-prescription { color: var(--text); }
+    .set-weight { 
+      color: var(--accent); 
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .rpe-input {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .rpe-input select {
+      width: 60px;
+      background: var(--bg);
+      border: 1px solid var(--surface-2);
+      color: var(--text);
+      padding: 0.4rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .rpe-input select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .accessories {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--surface-2);
+    }
+    .accessories h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+    }
+    .accessory-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--surface-2);
+    }
+    .btn {
+      flex: 1;
+      padding: 1rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: var(--accent-dim); }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--surface-2);
+    }
+    .btn-secondary:hover { background: var(--surface-2); }
+    .progress-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--surface);
+    }
+    .progress-section h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+    }
+    .progress-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--surface-2);
+    }
+    .progress-item:last-child { border-bottom: none; }
+    .progress-lift { font-size: 0.9rem; }
+    .progress-change {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .progress-change.up { color: var(--success); }
+    .progress-change.same { color: var(--text-dim); }
+    .progress-change.down { color: var(--warning); }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--surface);
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+    .modal h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+    }
+    .modal p {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    .setup-form label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+    }
+    .setup-form input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--surface-2);
+      color: var(--text);
+      padding: 0.75rem;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .setup-form input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .setup-form .btn { margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ADAPTIVE PL</h1>
+      <div class="week-indicator">WEEK <span id="currentWeek">1</span></div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-day="1">DAY 1 — SQUAT</button>
+      <button class="tab" data-day="2">DAY 2 — BENCH</button>
+      <button class="tab" data-day="3">DAY 3 — DEADLIFT</button>
+    </div>
+
+    <div id="day1" class="day-content active"></div>
+    <div id="day2" class="day-content"></div>
+    <div id="day3" class="day-content"></div>
+
+    <div class="progress-section">
+      <h3>TRAINING MAX ADJUSTMENTS</h3>
+      <div id="progressDisplay"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="resetWeek()">RESET WEEK</button>
+      <button class="btn btn-primary" onclick="completeWeek()">COMPLETE WEEK</button>
+    </div>
+  </div>
+
+  <div class="modal" id="setupModal">
+    <div class="modal-content">
+      <h2>SET YOUR MAXES</h2>
+      <p>Enter your current 1RM for each lift. Training maxes will be calculated at 90%.</p>
+      <form class="setup-form" onsubmit="saveSetup(event)">
+        <label>Squat 1RM (lbs)</label>
+        <input type="number" id="squat1rm" required>
+        <label>Bench Press 1RM (lbs)</label>
+        <input type="number" id="bench1rm" required>
+        <label>Deadlift 1RM (lbs)</label>
+        <input type="number" id="deadlift1rm" required>
+        <button type="submit" class="btn btn-primary">START PROGRAM</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const LIFTS = {
+      squat: { name: 'SQUAT', day: 1 },
+      bench: { name: 'BENCH PRESS', day: 2 },
+      deadlift: { name: 'DEADLIFT', day: 3 }
+    };
+
+    const WEEK_SCHEMES = [
+      { sets: [75, 75, 75, 75, 75], reps: [3, 3, 3, 3, 3], label: '5x3 @ 75%' },
+      { sets: [80, 80, 80, 80, 80], reps: [3, 3, 3, 3, 3], label: '5x3 @ 80%' },
+      { sets: [85, 85, 85, 85, 85], reps: [2, 2, 2, 2, 2], label: '5x2 @ 85%' },
+      { sets: [90, 90, 90], reps: [1, 1, 1], label: '3x1 @ 90%' }
+    ];
+
+    const ACCESSORIES = {
+      1: [
+        { name: 'Pause Squat', prescription: '3x4 @ 65%' },
+        { name: 'Dumbbell Bench', prescription: '3x10-12' },
+        { name: 'Barbell Row', prescription: '3x8-10' },
+        { name: 'Tricep Pushdown', prescription: '3x12-15' },
+        { name: 'Leg Curl', prescription: '3x12-15' }
+      ],
+      2: [
+        { name: 'Close Grip Bench', prescription: '3x6-8' },
+        { name: 'Bulgarian Split Squat', prescription: '3x8 each' },
+        { name: 'Pull-ups', prescription: '3xAMRAP' },
+        { name: 'Bicep Curl', prescription: '3x12-15' },
+        { name: 'Face Pulls', prescription: '3x15-20' }
+      ],
+      3: [
+        { name: 'Romanian Deadlift', prescription: '3x8' },
+        { name: 'Overhead Press', prescription: '3x8-10' },
+        { name: 'Lat Pulldown', prescription: '3x10-12' },
+        { name: 'Dumbbell Lunges', prescription: '3x10 each' },
+        { name: 'Hanging Leg Raise', prescription: '3x10-12' }
+      ]
+    };
+
+    let state = loadState();
+
+    function loadState() {
+      const saved = localStorage.getItem('plState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.week || parsed.week < 1) parsed.week = 1;
+        return parsed;
+      }
+      return {
+        trainingMaxes: { squat: 0, bench: 0, deadlift: 0 },
+        week: 1,
+        history: [],
+        currentPerformance: {}
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem('plState', JSON.stringify(state));
+    }
+
+    function roundToNearest(num, nearest = 5) {
+      return Math.round(num / nearest) * nearest;
+    }
+
+    function calculateWeight(tm, percentage) {
+      return roundToNearest(tm * (percentage / 100));
+    }
+
+    function renderDay(dayNum) {
+      const liftKey = Object.keys(LIFTS).find(k => LIFTS[k].day === dayNum);
+      const lift = LIFTS[liftKey];
+      const tm = state.trainingMaxes[liftKey];
+      const weekIndex = (state.week - 1) % 4;
+      const scheme = WEEK_SCHEMES[weekIndex];
+      
+      let html = `
+        <div class="lift-card">
+          <div class="lift-header">
+            <span class="lift-name">${lift.name}</span>
+            <span class="training-max">
+              TM: <input type="number" value="${tm}" onchange="updateTM('${liftKey}', this.value)" step="5"> lbs
+            </span>
+          </div>
+          <div class="sets-container">
+            <div class="set-row">
+              <span class="set-label">Warm</span>
+              <span class="set-prescription">5 reps @ 40%</span>
+              <span class="set-weight">${calculateWeight(tm, 40)} lbs</span>
+              <span></span>
+            </div>
+            <div class="set-row">
+              <span class="set-label">Warm</span>
+              <span class="set-prescription">5 reps @ 50%</span>
+              <span class="set-weight">${calculateWeight(tm, 50)} lbs</span>
+              <span></span>
+            </div>
+      `;
+
+      scheme.sets.forEach((pct, i) => {
+        const setKey = `${liftKey}_set${i}`;
+        const currentRpe = state.currentPerformance[setKey] || '';
+        
+        html += `
+          <div class="set-row">
+            <span class="set-label">Set ${i + 1}</span>
+            <span class="set-prescription">${scheme.reps[i]} reps @ ${pct}%</span>
+            <span class="set-weight">${calculateWeight(tm, pct)} lbs</span>
+            <div class="rpe-input">
+              <select data-lift="${liftKey}" data-set="${i}" onchange="recordRpe(this)">
+                <option value="">RPE</option>
+                <option value="6" ${currentRpe == 6 ? 'selected' : ''}>6</option>
+                <option value="6.5" ${currentRpe == 6.5 ? 'selected' : ''}>6.5</option>
+                <option value="7" ${currentRpe == 7 ? 'selected' : ''}>7</option>
+                <option value="7.5" ${currentRpe == 7.5 ? 'selected' : ''}>7.5</option>
+                <option value="8" ${currentRpe == 8 ? 'selected' : ''}>8</option>
+                <option value="8.5" ${currentRpe == 8.5 ? 'selected' : ''}>8.5</option>
+                <option value="9" ${currentRpe == 9 ? 'selected' : ''}>9</option>
+                <option value="9.5" ${currentRpe == 9.5 ? 'selected' : ''}>9.5</option>
+                <option value="10" ${currentRpe == 10 ? 'selected' : ''}>10</option>
+              </select>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div></div>`;
+
+      html += `
+        <div class="accessories">
+          <h3>ACCESSORIES</h3>
+          ${ACCESSORIES[dayNum].map(a => `
+            <div class="accessory-item">
+              <span>${a.name}</span>
+              <span>${a.prescription}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      document.getElementById(`day${dayNum}`).innerHTML = html;
+    }
+
+    function updateTM(lift, value) {
+      state.trainingMaxes[lift] = parseInt(value) || 0;
+      saveState();
+      renderAll();
+    }
+
+    function recordRpe(select) {
+      const key = `${select.dataset.lift}_set${select.dataset.set}`;
+      state.currentPerformance[key] = parseFloat(select.value) || 0;
+      saveState();
+      renderProgress();
+    }
+
+    function calculateAdjustment(lift) {
+      const weekIndex = (state.week - 1) % 4;
+      const scheme = WEEK_SCHEMES[weekIndex];
+      
+      // Collect all RPE values for this lift
+      const rpeValues = [];
+      for (let i = 0; i < scheme.sets.length; i++) {
+        const key = `${lift}_set${i}`;
+        if (state.currentPerformance[key]) {
+          rpeValues.push(state.currentPerformance[key]);
+        }
+      }
+
+      if (rpeValues.length === 0) return { change: 0, label: 'No data' };
+      
+      const avgRpe = rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length;
+      
+      // Target RPE ~8 for working sets
+      if (avgRpe < 7) return { change: 10, label: `+10 lbs (avg RPE ${avgRpe.toFixed(1)})` };
+      if (avgRpe < 7.5) return { change: 5, label: `+5 lbs (avg RPE ${avgRpe.toFixed(1)})` };
+      if (avgRpe <= 8.5) return { change: 0, label: `Maintain (avg RPE ${avgRpe.toFixed(1)})` };
+      if (avgRpe <= 9) return { change: -5, label: `-5 lbs (avg RPE ${avgRpe.toFixed(1)})` };
+      return { change: -10, label: `-10 lbs (avg RPE ${avgRpe.toFixed(1)})` };
+
+    }
+
+    function renderProgress() {
+      const lifts = ['squat', 'bench', 'deadlift'];
+      let html = '';
+      
+      lifts.forEach(lift => {
+        const adj = calculateAdjustment(lift);
+        const changeClass = adj.change > 0 ? 'up' : adj.change < 0 ? 'down' : 'same';
+        html += `
+          <div class="progress-item">
+            <span class="progress-lift">${LIFTS[lift].name}</span>
+            <span class="progress-change ${changeClass}">${adj.label}</span>
+          </div>
+        `;
+      });
+      
+      document.getElementById('progressDisplay').innerHTML = html;
+    }
+
+    function completeWeek() {
+      const lifts = ['squat', 'bench', 'deadlift'];
+      
+      lifts.forEach(lift => {
+        const adj = calculateAdjustment(lift);
+        state.trainingMaxes[lift] += adj.change;
+      });
+
+      state.history.push({
+        week: state.week,
+        maxes: { ...state.trainingMaxes },
+        performance: { ...state.currentPerformance }
+      });
+
+      state.week++;
+      state.currentPerformance = {};
+      saveState();
+      renderAll();
+      
+      alert(`Week ${state.week - 1} complete! Training maxes adjusted.`);
+    }
+
+    function resetWeek() {
+      if (confirm('Reset all entries for this week?')) {
+        state.currentPerformance = {};
+        saveState();
+        renderAll();
+      }
+    }
+
+    function renderAll() {
+      document.getElementById('currentWeek').textContent = state.week;
+      renderDay(1);
+      renderDay(2);
+      renderDay(3);
+      renderProgress();
+    }
+
+    function saveSetup(e) {
+      e.preventDefault();
+      state.trainingMaxes.squat = Math.round(parseInt(document.getElementById('squat1rm').value) * 0.9);
+      state.trainingMaxes.bench = Math.round(parseInt(document.getElementById('bench1rm').value) * 0.9);
+      state.trainingMaxes.deadlift = Math.round(parseInt(document.getElementById('deadlift1rm').value) * 0.9);
+      state.week = 1;
+      saveState();
+      document.getElementById('setupModal').classList.remove('active');
+      renderAll();
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.day-content').forEach(d => d.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`day${tab.dataset.day}`).classList.add('active');
+      });
+    });
+
+    // Initialize
+    if (state.trainingMaxes.squat === 0) {
+      document.getElementById('setupModal').classList.add('active');
+    } else {
+      renderAll();
+    }
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
