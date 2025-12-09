@@ -174,6 +174,50 @@
       opacity: 0.5;
       background: var(--surface);
     }
+    .accessory-block {
+      background: var(--surface-2);
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+    }
+    .accessory-block.skipped {
+      opacity: 0.5;
+    }
+    .accessory-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      gap: 0.5rem;
+    }
+    .accessory-sets {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .accessory-set-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+    }
+    .accessory-set-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      width: 45px;
+    }
+    .filler-block {
+      background: var(--surface-2);
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+    }
+    .filler-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
     .accessory-name { flex: 1; }
     .accessory-prescription { color: var(--text-dim); margin-right: 1rem; }
     .accessory-input {
@@ -457,24 +501,24 @@
 
     const ACCESSORIES = {
       1: [
-        { id: 'mag_row', name: 'Mag Grip Row', prescription: '3x8-10' },
-        { id: 'db_bench', name: 'Dumbbell Bench', prescription: '3x10-12' },
-        { id: 'tricep_pd', name: 'Tricep Pushdown', prescription: '3x12-15' },
-        { id: 'leg_curl', name: 'Leg Curl', prescription: '3x12-15' }
+        { id: 'mag_row', name: 'Mag Grip Row', prescription: '3x8-10', sets: 3 },
+        { id: 'db_bench', name: 'Dumbbell Bench', prescription: '3x10-12', sets: 3 },
+        { id: 'tricep_pd', name: 'Tricep Pushdown', prescription: '3x12-15', sets: 3 },
+        { id: 'leg_curl', name: 'Leg Curl', prescription: '3x12-15', sets: 3 }
       ],
       2: [
-        { id: 'cg_bench', name: 'Close Grip Bench', prescription: '3x6-8' },
-        { id: 'bss', name: 'Bulgarian Split Squat', prescription: '3x8 each' },
-        { id: 'pullups', name: 'Pull-ups', prescription: '3xAMRAP' },
-        { id: 'bicep_curl', name: 'Bicep Curl', prescription: '3x12-15' },
-        { id: 'face_pulls', name: 'Face Pulls', prescription: '3x15-20' }
+        { id: 'cg_bench', name: 'Close Grip Bench', prescription: '3x6-8', sets: 3 },
+        { id: 'bss', name: 'Bulgarian Split Squat', prescription: '3x8 each', sets: 3 },
+        { id: 'pullups', name: 'Pull-ups', prescription: '3xAMRAP', sets: 3 },
+        { id: 'bicep_curl', name: 'Bicep Curl', prescription: '3x12-15', sets: 3 },
+        { id: 'face_pulls', name: 'Face Pulls', prescription: '3x15-20', sets: 3 }
       ],
       3: [
-        { id: 'rdl', name: 'Romanian Deadlift', prescription: '3x8' },
-        { id: 'ohp', name: 'Overhead Press', prescription: '3x8-10' },
-        { id: 'lat_pd', name: 'Lat Pulldown', prescription: '3x10-12' },
-        { id: 'db_lunge', name: 'Dumbbell Lunges', prescription: '3x10 each' },
-        { id: 'leg_raise', name: 'Hanging Leg Raise', prescription: '3x10-12' }
+        { id: 'rdl', name: 'Romanian Deadlift', prescription: '3x8', sets: 3 },
+        { id: 'ohp', name: 'Overhead Press', prescription: '3x8-10', sets: 3 },
+        { id: 'lat_pd', name: 'Lat Pulldown', prescription: '3x10-12', sets: 3 },
+        { id: 'db_lunge', name: 'Dumbbell Lunges', prescription: '3x10 each', sets: 3 },
+        { id: 'leg_raise', name: 'Hanging Leg Raise', prescription: '3x10-12', sets: 3 }
       ]
     };
 
@@ -629,19 +673,33 @@
           <h3>ACCESSORIES</h3>
           ${ACCESSORIES[dayNum].map(a => {
             const isSkipped = state.skippedAccessories.some(s => s.id === a.id && s.day === dayNum);
-            const accData = state.accessoryData[a.id] || '';
+            let setsHtml = '';
+            for (let s = 0; s < a.sets; s++) {
+              const setKey = `${a.id}_set${s}`;
+              const setData = state.accessoryData[setKey] || '';
+              setsHtml += `
+                <div class="accessory-set-row">
+                  <span class="accessory-set-label">Set ${s + 1}</span>
+                  <input type="text" class="accessory-input" placeholder="wt x reps" 
+                         value="${setData}" 
+                         onchange="recordAccessory('${setKey}', this.value)"
+                         ${isSkipped ? 'disabled' : ''}>
+                </div>
+              `;
+            }
             return `
-              <div class="accessory-item ${isSkipped ? 'skipped' : ''}">
-                <span class="accessory-name">${a.name}</span>
-                <span class="accessory-prescription">${a.prescription}</span>
-                <input type="text" class="accessory-input" placeholder="wt x reps" 
-                       value="${accData}" 
-                       onchange="recordAccessory('${a.id}', this.value)"
-                       ${isSkipped ? 'disabled' : ''}>
-                <button class="skip-btn ${isSkipped ? 'skipped' : ''}" 
-                        onclick="toggleSkip('${a.id}', '${a.name}', '${a.prescription}', ${dayNum})">
-                  ${isSkipped ? 'SKIPPED' : 'SKIP'}
-                </button>
+              <div class="accessory-block ${isSkipped ? 'skipped' : ''}">
+                <div class="accessory-header">
+                  <span class="accessory-name">${a.name}</span>
+                  <span class="accessory-prescription">${a.prescription}</span>
+                  <button class="skip-btn ${isSkipped ? 'skipped' : ''}" 
+                          onclick="toggleSkip('${a.id}', '${a.name}', '${a.prescription}', ${dayNum}, ${a.sets})">
+                    ${isSkipped ? 'SKIPPED' : 'SKIP'}
+                  </button>
+                </div>
+                <div class="accessory-sets">
+                  ${setsHtml}
+                </div>
               </div>
             `;
           }).join('')}
@@ -712,16 +770,34 @@
             <div class="lift-header">
               <span class="lift-name">FILLER DAY</span>
             </div>
-            ${skipped.map((item, i) => `
-              <div class="filler-item">
-                <span>${item.name}</span>
-                <span style="color: var(--text-dim)">${item.prescription}</span>
-                <input type="text" class="accessory-input" placeholder="wt x reps" 
-                       value="${state.accessoryData[item.id] || ''}" 
-                       onchange="recordAccessory('${item.id}', this.value)">
-                <button class="restore-btn" onclick="restoreAccessory(${i})">RESTORE</button>
-              </div>
-            `).join('')}
+            ${skipped.map((item, i) => {
+              const numSets = item.sets || 3;
+              let setsHtml = '';
+              for (let s = 0; s < numSets; s++) {
+                const setKey = `${item.id}_set${s}`;
+                const setData = state.accessoryData[setKey] || '';
+                setsHtml += `
+                  <div class="accessory-set-row">
+                    <span class="accessory-set-label">Set ${s + 1}</span>
+                    <input type="text" class="accessory-input" placeholder="wt x reps" 
+                           value="${setData}" 
+                           onchange="recordAccessory('${setKey}', this.value)">
+                  </div>
+                `;
+              }
+              return `
+                <div class="filler-block">
+                  <div class="filler-header">
+                    <span>${item.name}</span>
+                    <span style="color: var(--text-dim)">${item.prescription}</span>
+                    <button class="restore-btn" onclick="restoreAccessory(${i})">RESTORE</button>
+                  </div>
+                  <div class="accessory-sets">
+                    ${setsHtml}
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         `;
       }
@@ -729,12 +805,12 @@
       document.getElementById('dayfiller').innerHTML = html;
     }
 
-    function toggleSkip(id, name, prescription, day) {
+    function toggleSkip(id, name, prescription, day, sets) {
       const idx = state.skippedAccessories.findIndex(s => s.id === id && s.day === day);
       if (idx >= 0) {
         state.skippedAccessories.splice(idx, 1);
       } else {
-        state.skippedAccessories.push({ id, name, prescription, day });
+        state.skippedAccessories.push({ id, name, prescription, day, sets });
       }
       saveState();
       renderDay(day);
