@@ -205,6 +205,12 @@
       color: var(--text-dim);
       width: 45px;
     }
+    .last-week-hint {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
     .filler-block {
       background: var(--surface-2);
       margin-bottom: 0.75rem;
@@ -601,6 +607,15 @@
       localStorage.setItem('plState', JSON.stringify(state));
     }
 
+    function getLastWeekAccessory(setKey) {
+      if (state.history.length === 0) return null;
+      const lastWeek = state.history[state.history.length - 1];
+      if (lastWeek && lastWeek.accessories && lastWeek.accessories[setKey]) {
+        return lastWeek.accessories[setKey];
+      }
+      return null;
+    }
+
     function roundToNearest(num, nearest = 5) {
       return Math.round(num / nearest) * nearest;
     }
@@ -677,13 +692,15 @@
             for (let s = 0; s < a.sets; s++) {
               const setKey = `${a.id}_set${s}`;
               const setData = state.accessoryData[setKey] || '';
+              const lastWeekData = getLastWeekAccessory(setKey);
               setsHtml += `
                 <div class="accessory-set-row">
                   <span class="accessory-set-label">Set ${s + 1}</span>
-                  <input type="text" class="accessory-input" placeholder="wt x reps" 
+                  <input type="text" class="accessory-input" placeholder="${lastWeekData || 'wt x reps'}" 
                          value="${setData}" 
                          onchange="recordAccessory('${setKey}', this.value)"
                          ${isSkipped ? 'disabled' : ''}>
+                  ${lastWeekData ? `<span class="last-week-hint">last: ${lastWeekData}</span>` : ''}
                 </div>
               `;
             }
