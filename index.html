@@ -7,8 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Adaptive PL">
   <meta name="theme-color" content="#0a0a0a">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
   <title>Adaptive Powerlifting</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -22,6 +20,7 @@
       --text-dim: #888;
       --success: #22c55e;
       --warning: #eab308;
+      --run: #3b82f6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -57,15 +56,17 @@
       display: flex;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
     .tab {
       flex: 1;
+      min-width: 120px;
       padding: 1rem;
       background: var(--surface);
       border: none;
       color: var(--text-dim);
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       cursor: pointer;
       transition: all 0.2s;
       border-bottom: 3px solid transparent;
@@ -76,6 +77,8 @@
       border-bottom-color: var(--accent);
       background: var(--surface-2);
     }
+    .tab.run-tab.active { border-bottom-color: var(--run); }
+    .tab.filler-tab.active { border-bottom-color: var(--warning); }
     .day-content { display: none; }
     .day-content.active { display: block; }
     .lift-card {
@@ -84,6 +87,7 @@
       margin-bottom: 1rem;
       border-left: 4px solid var(--accent);
     }
+    .lift-card.run-card { border-left-color: var(--run); }
     .lift-header {
       display: flex;
       justify-content: space-between;
@@ -159,10 +163,41 @@
     .accessory-item {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem 0;
+      align-items: center;
+      padding: 0.75rem;
       font-size: 0.85rem;
-      color: var(--text-dim);
+      background: var(--surface-2);
+      margin-bottom: 0.5rem;
+      gap: 0.5rem;
     }
+    .accessory-item.skipped {
+      opacity: 0.5;
+      background: var(--surface);
+    }
+    .accessory-name { flex: 1; }
+    .accessory-prescription { color: var(--text-dim); margin-right: 1rem; }
+    .accessory-input {
+      width: 80px;
+      background: var(--bg);
+      border: 1px solid var(--surface-2);
+      color: var(--text);
+      padding: 0.4rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .accessory-input::placeholder { color: var(--text-dim); }
+    .skip-btn {
+      background: none;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      padding: 0.3rem 0.5rem;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .skip-btn:hover { border-color: var(--warning); color: var(--warning); }
+    .skip-btn.skipped { border-color: var(--warning); color: var(--warning); }
     .btn-row {
       display: flex;
       gap: 1rem;
@@ -236,6 +271,8 @@
       padding: 2rem;
       max-width: 500px;
       width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .modal h2 {
       font-family: 'Bebas Neue', sans-serif;
@@ -270,6 +307,70 @@
       border-color: var(--accent);
     }
     .setup-form .btn { margin-top: 1.5rem; }
+    
+    /* C25K Styles */
+    .run-section {
+      background: var(--surface);
+      padding: 1.5rem;
+      border-left: 4px solid var(--run);
+      margin-bottom: 1rem;
+    }
+    .run-section h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      color: var(--run);
+      margin-bottom: 1rem;
+    }
+    .run-workout {
+      background: var(--surface-2);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .run-day-label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .run-prescription {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .run-complete-btn {
+      background: var(--run);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+    .run-complete-btn.done {
+      background: var(--success);
+    }
+    .filler-empty {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      padding: 2rem;
+      text-align: center;
+    }
+    .filler-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--surface-2);
+      margin-bottom: 0.5rem;
+    }
+    .restore-btn {
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
   </style>
 </head>
 <body>
@@ -283,11 +384,15 @@
       <button class="tab active" data-day="1">DAY 1 — SQUAT</button>
       <button class="tab" data-day="2">DAY 2 — BENCH</button>
       <button class="tab" data-day="3">DAY 3 — DEADLIFT</button>
+      <button class="tab run-tab" data-day="run">C25K</button>
+      <button class="tab filler-tab" data-day="filler">FILLER</button>
     </div>
 
     <div id="day1" class="day-content active"></div>
     <div id="day2" class="day-content"></div>
     <div id="day3" class="day-content"></div>
+    <div id="dayrun" class="day-content"></div>
+    <div id="dayfiller" class="day-content"></div>
 
     <div class="progress-section">
       <h3>TRAINING MAX ADJUSTMENTS</h3>
@@ -332,27 +437,77 @@
 
     const ACCESSORIES = {
       1: [
-        { name: 'Pause Squat', prescription: '3x4 @ 65%' },
-        { name: 'Dumbbell Bench', prescription: '3x10-12' },
-        { name: 'Barbell Row', prescription: '3x8-10' },
-        { name: 'Tricep Pushdown', prescription: '3x12-15' },
-        { name: 'Leg Curl', prescription: '3x12-15' }
+        { id: 'mag_row', name: 'Mag Grip Row', prescription: '3x8-10' },
+        { id: 'db_bench', name: 'Dumbbell Bench', prescription: '3x10-12' },
+        { id: 'tricep_pd', name: 'Tricep Pushdown', prescription: '3x12-15' },
+        { id: 'leg_curl', name: 'Leg Curl', prescription: '3x12-15' }
       ],
       2: [
-        { name: 'Close Grip Bench', prescription: '3x6-8' },
-        { name: 'Bulgarian Split Squat', prescription: '3x8 each' },
-        { name: 'Pull-ups', prescription: '3xAMRAP' },
-        { name: 'Bicep Curl', prescription: '3x12-15' },
-        { name: 'Face Pulls', prescription: '3x15-20' }
+        { id: 'cg_bench', name: 'Close Grip Bench', prescription: '3x6-8' },
+        { id: 'bss', name: 'Bulgarian Split Squat', prescription: '3x8 each' },
+        { id: 'pullups', name: 'Pull-ups', prescription: '3xAMRAP' },
+        { id: 'bicep_curl', name: 'Bicep Curl', prescription: '3x12-15' },
+        { id: 'face_pulls', name: 'Face Pulls', prescription: '3x15-20' }
       ],
       3: [
-        { name: 'Romanian Deadlift', prescription: '3x8' },
-        { name: 'Overhead Press', prescription: '3x8-10' },
-        { name: 'Lat Pulldown', prescription: '3x10-12' },
-        { name: 'Dumbbell Lunges', prescription: '3x10 each' },
-        { name: 'Hanging Leg Raise', prescription: '3x10-12' }
+        { id: 'rdl', name: 'Romanian Deadlift', prescription: '3x8' },
+        { id: 'ohp', name: 'Overhead Press', prescription: '3x8-10' },
+        { id: 'lat_pd', name: 'Lat Pulldown', prescription: '3x10-12' },
+        { id: 'db_lunge', name: 'Dumbbell Lunges', prescription: '3x10 each' },
+        { id: 'leg_raise', name: 'Hanging Leg Raise', prescription: '3x10-12' }
       ]
     };
+
+    const C25K = [
+      { 
+        week: 1,
+        runs: [
+          { day: 'Tues', workout: 'Run 1 min, Walk 1 min — Repeat x10' },
+          { day: 'Thurs', workout: 'Run 2 mins, Walk 4 mins — Repeat x5' },
+          { day: 'Sun', workout: 'Run 2 mins, Walk 4 mins — Repeat x5' }
+        ]
+      },
+      { 
+        week: 2,
+        runs: [
+          { day: 'Tues', workout: 'Run 3 mins, Walk 3 mins — Repeat x4' },
+          { day: 'Thurs', workout: 'Run 3 mins, Walk 3 mins — Repeat x4' },
+          { day: 'Sun', workout: 'Run 5 mins, Walk 3 mins — Repeat x3' }
+        ]
+      },
+      { 
+        week: 3,
+        runs: [
+          { day: 'Tues', workout: 'Run 7 mins, Walk 2 mins — Repeat x3' },
+          { day: 'Thurs', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' },
+          { day: 'Sun', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' }
+        ]
+      },
+      { 
+        week: 4,
+        runs: [
+          { day: 'Tues', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' },
+          { day: 'Thurs', workout: 'Run 10 mins, Walk 2 mins — Repeat x2, Run 5 mins' },
+          { day: 'Sun', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' }
+        ]
+      },
+      { 
+        week: 5,
+        runs: [
+          { day: 'Tues', workout: 'Run 9 mins, Walk 1 min — Repeat x3' },
+          { day: 'Thurs', workout: 'Run 12 mins, Walk 2 mins — Repeat x2, Run 5 mins' },
+          { day: 'Sun', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' }
+        ]
+      },
+      { 
+        week: 6,
+        runs: [
+          { day: 'Tues', workout: 'Run 15 mins, Walk 1 min — Repeat x2' },
+          { day: 'Thurs', workout: 'Run 8 mins, Walk 2 mins — Repeat x3' },
+          { day: 'Sun', workout: '5K Race! 🏃' }
+        ]
+      }
+    ];
 
     let state = loadState();
 
@@ -361,13 +516,19 @@
       if (saved) {
         const parsed = JSON.parse(saved);
         if (!parsed.week || parsed.week < 1) parsed.week = 1;
+        if (!parsed.accessoryData) parsed.accessoryData = {};
+        if (!parsed.skippedAccessories) parsed.skippedAccessories = [];
+        if (!parsed.c25kCompleted) parsed.c25kCompleted = {};
         return parsed;
       }
       return {
         trainingMaxes: { squat: 0, bench: 0, deadlift: 0 },
         week: 1,
         history: [],
-        currentPerformance: {}
+        currentPerformance: {},
+        accessoryData: {},
+        skippedAccessories: [],
+        c25kCompleted: {}
       };
     }
 
@@ -445,16 +606,115 @@
       html += `
         <div class="accessories">
           <h3>ACCESSORIES</h3>
-          ${ACCESSORIES[dayNum].map(a => `
-            <div class="accessory-item">
-              <span>${a.name}</span>
-              <span>${a.prescription}</span>
-            </div>
-          `).join('')}
+          ${ACCESSORIES[dayNum].map(a => {
+            const isSkipped = state.skippedAccessories.some(s => s.id === a.id && s.day === dayNum);
+            const accData = state.accessoryData[a.id] || '';
+            return `
+              <div class="accessory-item ${isSkipped ? 'skipped' : ''}">
+                <span class="accessory-name">${a.name}</span>
+                <span class="accessory-prescription">${a.prescription}</span>
+                <input type="text" class="accessory-input" placeholder="wt x reps" 
+                       value="${accData}" 
+                       onchange="recordAccessory('${a.id}', this.value)"
+                       ${isSkipped ? 'disabled' : ''}>
+                <button class="skip-btn ${isSkipped ? 'skipped' : ''}" 
+                        onclick="toggleSkip('${a.id}', '${a.name}', '${a.prescription}', ${dayNum})">
+                  ${isSkipped ? 'SKIPPED' : 'SKIP'}
+                </button>
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
 
       document.getElementById(`day${dayNum}`).innerHTML = html;
+    }
+
+    function renderC25K() {
+      const c25kWeek = Math.min(state.week, 6);
+      const weekData = C25K[c25kWeek - 1];
+      
+      let html = `
+        <div class="run-section">
+          <h3>C25K — WEEK ${c25kWeek}</h3>
+          ${weekData.runs.map((run, i) => {
+            const runKey = `w${c25kWeek}_r${i}`;
+            const isDone = state.c25kCompleted[runKey];
+            return `
+              <div class="run-workout">
+                <div class="run-day-label">${run.day}</div>
+                <div class="run-prescription">${run.workout}</div>
+                <button class="run-complete-btn ${isDone ? 'done' : ''}" 
+                        onclick="toggleRun('${runKey}')">
+                  ${isDone ? '✓ COMPLETED' : 'MARK COMPLETE'}
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      document.getElementById('dayrun').innerHTML = html;
+    }
+
+    function renderFiller() {
+      const skipped = state.skippedAccessories;
+      
+      let html = '';
+      if (skipped.length === 0) {
+        html = '<div class="filler-empty">No skipped exercises this week. Nice work! 💪</div>';
+      } else {
+        html = `
+          <div class="lift-card">
+            <div class="lift-header">
+              <span class="lift-name">FILLER DAY</span>
+            </div>
+            ${skipped.map((item, i) => `
+              <div class="filler-item">
+                <span>${item.name}</span>
+                <span style="color: var(--text-dim)">${item.prescription}</span>
+                <input type="text" class="accessory-input" placeholder="wt x reps" 
+                       value="${state.accessoryData[item.id] || ''}" 
+                       onchange="recordAccessory('${item.id}', this.value)">
+                <button class="restore-btn" onclick="restoreAccessory(${i})">RESTORE</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      document.getElementById('dayfiller').innerHTML = html;
+    }
+
+    function toggleSkip(id, name, prescription, day) {
+      const idx = state.skippedAccessories.findIndex(s => s.id === id && s.day === day);
+      if (idx >= 0) {
+        state.skippedAccessories.splice(idx, 1);
+      } else {
+        state.skippedAccessories.push({ id, name, prescription, day });
+      }
+      saveState();
+      renderDay(day);
+      renderFiller();
+    }
+
+    function restoreAccessory(index) {
+      const item = state.skippedAccessories[index];
+      state.skippedAccessories.splice(index, 1);
+      saveState();
+      renderDay(item.day);
+      renderFiller();
+    }
+
+    function recordAccessory(id, value) {
+      state.accessoryData[id] = value;
+      saveState();
+    }
+
+    function toggleRun(key) {
+      state.c25kCompleted[key] = !state.c25kCompleted[key];
+      saveState();
+      renderC25K();
     }
 
     function updateTM(lift, value) {
@@ -474,7 +734,6 @@
       const weekIndex = (state.week - 1) % 4;
       const scheme = WEEK_SCHEMES[weekIndex];
       
-      // Collect all RPE values for this lift
       const rpeValues = [];
       for (let i = 0; i < scheme.sets.length; i++) {
         const key = `${lift}_set${i}`;
@@ -487,13 +746,11 @@
       
       const avgRpe = rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length;
       
-      // Target RPE ~8 for working sets
       if (avgRpe < 7) return { change: 10, label: `+10 lbs (avg RPE ${avgRpe.toFixed(1)})` };
       if (avgRpe < 7.5) return { change: 5, label: `+5 lbs (avg RPE ${avgRpe.toFixed(1)})` };
       if (avgRpe <= 8.5) return { change: 0, label: `Maintain (avg RPE ${avgRpe.toFixed(1)})` };
       if (avgRpe <= 9) return { change: -5, label: `-5 lbs (avg RPE ${avgRpe.toFixed(1)})` };
       return { change: -10, label: `-10 lbs (avg RPE ${avgRpe.toFixed(1)})` };
-
     }
 
     function renderProgress() {
@@ -525,11 +782,15 @@
       state.history.push({
         week: state.week,
         maxes: { ...state.trainingMaxes },
-        performance: { ...state.currentPerformance }
+        performance: { ...state.currentPerformance },
+        accessories: { ...state.accessoryData }
       });
 
       state.week++;
       state.currentPerformance = {};
+      state.accessoryData = {};
+      state.skippedAccessories = [];
+      state.c25kCompleted = {};
       saveState();
       renderAll();
       
@@ -539,6 +800,9 @@
     function resetWeek() {
       if (confirm('Reset all entries for this week?')) {
         state.currentPerformance = {};
+        state.accessoryData = {};
+        state.skippedAccessories = [];
+        state.c25kCompleted = {};
         saveState();
         renderAll();
       }
@@ -549,6 +813,8 @@
       renderDay(1);
       renderDay(2);
       renderDay(3);
+      renderC25K();
+      renderFiller();
       renderProgress();
     }
 
@@ -578,11 +844,6 @@
       document.getElementById('setupModal').classList.add('active');
     } else {
       renderAll();
-    }
-
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
     }
   </script>
 </body>
